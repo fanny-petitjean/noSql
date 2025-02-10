@@ -1,6 +1,6 @@
 import time
 from config import get_driver
-from test2 import Neo4jManager
+from test import Neo4jManager
 
 def measure_time(func, *args):
     start_time = time.time()

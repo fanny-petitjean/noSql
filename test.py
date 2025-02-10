@@ -97,7 +97,7 @@ class Neo4jManager:
             print("🔄 Insertion des relations FOLLOWS...")
             follows = [{"user_id": user_id, "follower_id": f}
                        for user_id in range(num_users)
-                       for f in random.sample(range(num_users), random.randint(0, 20)) if f != user_id]
+                       for f in random.sample(range(num_users), random.randint(0, min(20, num_users - 1))) if f != user_id]
             
             for i in range(0, len(follows), batch_size):
                 session.execute_write(lambda tx: tx.run("""
