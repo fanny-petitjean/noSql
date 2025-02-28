@@ -9,6 +9,7 @@ from faker import Faker
 from sqlalchemy.orm import Session
 from database import SessionLocal
 from models import User, Product
+from sqlalchemy.dialects.postgresql import insert
 
 fake = Faker()
 driver = get_driver()
@@ -34,22 +35,16 @@ def insert_data_postgresql():
     start_time = time.time()
     db: Session = SessionLocal()
 
-    # Insertion des utilisateurs
     users = [User(name=fake.name()) for _ in range(num_users)]
-    db.bulk_save_objects(users)
+    db.execute(insert(User).values([{"name": fake.name()} for _ in range(num_users)]))
+    db.execute(insert(Product).values([{"name": fake.word(), "price": round(random.uniform(5, 100), 2)} for _ in range(num_products)]))
     db.commit()
-
-    # Insertion des produits
     products = [Product(name=fake.word(), price=round(random.uniform(5, 100), 2)) for _ in range(num_products)]
     db.bulk_save_objects(products)
     db.commit()
-
     end_time = time.time()
     db.close()
-
     execution_time = round(end_time - start_time, 2)
-    
-    # Ajouter le temps d'exécution dans l'historique
     history_text.insert(tk.END, f"PostgreSQL : {num_users} utilisateurs, {num_products} produits - {execution_time} sec\n")
     history_text.see(tk.END)  # Scroll automatique vers le bas
     
@@ -66,23 +61,19 @@ def insert_data_neo4j():
     
     start_time = time.time()
     
-    # Création des index
-    #manager.create_indexes()
-    
-    # Suppression des anciennes données (optionnel)
+
+
     manager.delete_all_data()
-    
-    # Insertion des utilisateurs et produits
+
     manager.create_users_and_products(num_users, num_products)
     
-    # Création des relations follows et achats
     manager.create_relationships(num_users, num_products)
     
     execution_time = round(time.time() - start_time, 2)
     
-    # Ajouter le temps d'exécution dans l'historique
+  
     history_text.insert(tk.END, f"Neo4j : {num_users} utilisateurs, {num_products} produits - {execution_time} sec\n")
-    history_text.see(tk.END)  # Scroll automatique vers le bas
+    history_text.see(tk.END)  
     
     messagebox.showinfo("Neo4j", f"Insertion terminée en {execution_time} secondes.")
 
@@ -91,22 +82,19 @@ def show_data():
     """Récupère et affiche les utilisateurs et produits enregistrés dans PostgreSQL."""
     db: Session = SessionLocal()
 
-    # Récupérer quelques utilisateurs et produits
+
     users = db.query(User).limit(10).all()
     products = db.query(Product).limit(10).all()
 
     db.close()
 
-    # Construire une chaîne pour afficher les données
     result = "📌 **Utilisateurs (10 premiers)** :\n"
     result += "\n".join([f"- {user.id}: {user.name}" for user in users])
     result += "\n\n📌 **Produits (10 premiers)** :\n"
     result += "\n".join([f"- {product.id}: {product.name} ({product.price}€)" for product in products])
 
-    # Afficher les données dans la zone d'historique
     history_text.insert(tk.END, result + "\n\n")
-    history_text.see(tk.END)  # Scroll automatique vers le bas
-
+    history_text.see(tk.END)  
 def count_users_postgresql():
     db: Session = SessionLocal()
     count = db.query(User).count()
@@ -162,7 +150,6 @@ def execute_queries(popup, query_type, user_id_entry, level_entry, product_entry
 
     popup.destroy()
 
-    # Exécution des requêtes en fonction du type sélectionné
     if query_type == "products_by_followers":
         # Requête PostgreSQL
         try:
@@ -192,7 +179,7 @@ def execute_queries(popup, query_type, user_id_entry, level_entry, product_entry
 
     elif query_type == "followers_product":
         try:
-            followers_pg = []  # Simulation de requête PostgreSQL (à adapter)
+            followers_pg = []  
             start_time = time.time()
             followers_pg_time = round(time.time() - start_time, 2)
         except Exception as e:
@@ -213,7 +200,7 @@ def execute_queries(popup, query_type, user_id_entry, level_entry, product_entry
 
     elif query_type == "buyers_count":
         try:
-            buyers_pg = []  # Simulation de requête PostgreSQL (à adapter)
+            buyers_pg = [] 
             start_time = time.time()
             buyers_pg_time = round(time.time() - start_time, 2)
         except Exception as e:
@@ -251,7 +238,6 @@ product_entry.pack()
 button_frame = tk.Frame(root)
 button_frame.pack(pady=10)
 
-# PostgreSQL
 pg_frame = tk.Frame(button_frame)
 pg_frame.pack(side=tk.LEFT, padx=10)
 
@@ -261,7 +247,6 @@ tk.Button(pg_frame, text="Compter Utilisateurs", command=count_users_postgresql)
 tk.Button(pg_frame, text="Compter Produits", command=count_products_postgresql).pack(pady=2)
 
 
-# Neo4j
 neo4j_frame = tk.Frame(button_frame)
 neo4j_frame.pack(side=tk.RIGHT, padx=10)
 
@@ -278,10 +263,9 @@ tk.Button(root, text="Nombre d'acheteurs d'un produit", command=lambda: open_pop
 tk.Button(root, text="Afficher les Données", command=show_data).pack(pady=5)
 
 
-# Zone d'affichage des temps de performance
+
 tk.Label(root, text="Historique des performances :").pack()
 history_text = tk.Text(root, height=10, width=60)
 history_text.pack()
 
-# Lancer l'interface graphique
 root.mainloop()

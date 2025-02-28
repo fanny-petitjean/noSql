@@ -8,10 +8,8 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
 
-    # Ajout de la relation correcte avec les achats
     purchases = relationship("Purchase", back_populates="user")
     
-    # Gestion des followers avec les bonnes clés étrangères
     followers = relationship(
         "Follower",
         foreign_keys="[Follower.user_id]",
@@ -48,6 +46,5 @@ class Purchase(Base):
     product_id = Column(Integer, ForeignKey('products.id'), primary_key=True)
     purchase_date = Column(TIMESTAMP, nullable=False)
     
-    # Ajout de la relation avec `User` et `Product`
     user = relationship("User", back_populates="purchases")
     product = relationship("Product", back_populates="purchases")
